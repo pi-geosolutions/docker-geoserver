@@ -57,9 +57,9 @@ ENV CATALINA_OPTS "-Xms1024M \
  -XX:+UnlockExperimentalVMOptions \
  -XX:+UseCGroupMemoryLimitForHeap"
 
-ENV DATADIR "data_dir"
-
-# Use min data dir template
+# change this variable to change the datadir used
+ENV DATADIR "min_data_dir"
+# Use data dir template
 COPY $DATADIR/ /mnt/geoserver_datadir/
 # Use basic default datadir
 #RUN mv $CATALINA_HOME/webapps/${WEBAPP_PATH}/data/* /mnt/geoserver_datadir/
