@@ -66,3 +66,10 @@ ENV ENABLE_CORS=1
 # Enable CORS in Tomcat
 COPY web.xml /tmp/web.xml
 RUN if [ "$ENABLE_CORS" = 1 ] ; then mv /tmp/web.xml /usr/local/tomcat/webapps/geoserver/WEB-INF/web.xml; fi
+
+ADD entrypoint.sh /entrypoint.sh
+RUN chmod u+x /entrypoint.sh
+
+ENTRYPOINT ["/entrypoint.sh"]
+
+CMD ["catalina.sh", "run"]
