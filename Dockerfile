@@ -64,4 +64,5 @@ COPY $DATADIR/ /mnt/geoserver_datadir/
 
 ENV ENABLE_CORS=1
 # Enable CORS in Tomcat
-RUN if [ "$ENABLE_CORS" = 1 ] ; then sed -i -E "s|<\!-- ==================== Built In Filter Mappings ====================== -->|<filter>\n  <filter-name>CorsFilter</filter-name>\n  <filter-class>org.apache.catalina.filters.CorsFilter</filter-class>\n</filter>\n<filter-mapping>\n  <filter-name>CorsFilter</filter-name>\n  <url-pattern>/*</url-pattern>\n</filter-mapping>\n  <\!-- ==================== Built In Filter Mappingsss ====================== -->|gm" /usr/local/tomcat/conf/web.xml ; fi
+COPY web.xml /tmp/web.xml
+RUN if [ "$ENABLE_CORS" = 1 ] ; then mv /tmp/web.xml /usr/local/tomcat/webapps/geoserver/WEB-INF/web.xml; fi
