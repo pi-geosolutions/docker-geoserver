@@ -1,4 +1,4 @@
-DOCKER_TAG ?= latest
+DOCKER_TAG ?= 2.15.3-win
 DOCKER_IMAGE = pigeosolutions/geoserver
 
 all: build
