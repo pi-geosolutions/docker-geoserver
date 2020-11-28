@@ -2,8 +2,8 @@ FROM tomcat:9-jre8
 MAINTAINER pi-Geosolutions "jp@pigeosolutions.fr"
 # highly inspired by camptocamp's
 
-ARG GEOSERVER_VERSION=2.17
-ARG GEOSERVER_MINOR_VERSION=2
+ARG GEOSERVER_VERSION=2.18
+ARG GEOSERVER_MINOR_VERSION=1
 # ARG WEBAPP_PATH "ROOT"
 ARG WEBAPP_PATH="geoserver"
 
@@ -58,9 +58,9 @@ ENV CATALINA_OPTS "-Xms1024M \
  -XX:+UseCGroupMemoryLimitForHeap"
 
 # change this variable to change the datadir used
-ARG DATADIR="min_data_dir"
+#ARG DATADIR="min_data_dir"
 # Use data dir template
-COPY $DATADIR/ /mnt/geoserver_datadir/
+#COPY $DATADIR/ /mnt/geoserver_datadir/
 # Use basic default datadir
 #RUN mv $CATALINA_HOME/webapps/${WEBAPP_PATH}/data/* /mnt/geoserver_datadir/
 
@@ -68,3 +68,13 @@ COPY $DATADIR/ /mnt/geoserver_datadir/
 ENV ENABLE_CORS=1
 # Enable CORS in Tomcat
 RUN if [ "$ENABLE_CORS" = 1 ] ; then sed -i -E "s|<\!-- ==================== Built In Filter Mappings ====================== -->|<filter>\n  <filter-name>CorsFilter</filter-name>\n  <filter-class>org.apache.catalina.filters.CorsFilter</filter-class>\n</filter>\n<filter-mapping>\n  <filter-name>CorsFilter</filter-name>\n  <url-pattern>/*</url-pattern>\n</filter-mapping>\n  <\!-- ==================== Built In Filter Mappingsss ====================== -->|gm" /usr/local/tomcat/conf/web.xml ; fi
+
+ADD entrypoint.sh /entrypoint.sh
+RUN chmod u+x /entrypoint.sh
+
+# Make an env var out of the ARG variable, to make it available to the entrypoint
+ENV WEBAPP_PATH=${WEBAPP_PATH}
+
+ENTRYPOINT ["/entrypoint.sh"]
+
+CMD ["catalina.sh", "run"]
