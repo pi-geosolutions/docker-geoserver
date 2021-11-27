@@ -13,4 +13,9 @@ else
 	echo "/mnt/geoserver_datadir does not exist"
 fi
 
+if [[ "$ENABLE_CORS" == "true" ]]; then
+	mv /usr/local/tomcat/webapps/geoserver/WEB-INF/web.xml /usr/local/tomcat/webapps/geoserver/WEB-INF/web-orig.xml 
+	cp /usr/local/tomcat/webapps/geoserver/WEB-INF/web-cors.xml /usr/local/tomcat/webapps/geoserver/WEB-INF/web.xml
+fi
+
 exec "$@"

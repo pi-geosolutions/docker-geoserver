@@ -2,7 +2,7 @@ FROM tomcat:9-jre8
 MAINTAINER pi-Geosolutions "jp@pigeosolutions.fr"
 # highly inspired by camptocamp's
 
-ARG GEOSERVER_VERSION=2.18
+ARG GEOSERVER_VERSION=2.20
 ARG GEOSERVER_MINOR_VERSION=1
 # ARG WEBAPP_PATH "ROOT"
 ARG WEBAPP_PATH="geoserver"
@@ -24,7 +24,7 @@ RUN cd /usr/local/tomcat/lib && \
 VOLUME [ "/mnt/geoserver_datadir", "/mnt/geoserver_geodata", "/mnt/geoserver_tiles", "/tmp" ]
 
 # space-separate list of plugins to install
-ARG PLUGINS_EXT="css"
+ARG PLUGINS_EXT="css control-flow vectortiles"
 ARG PLUGINS_COMMUNITY=""
 
 # Install plugins if some listed
@@ -64,16 +64,15 @@ ENV CATALINA_OPTS "-Xms1024M \
 # Use basic default datadir
 #RUN mv $CATALINA_HOME/webapps/${WEBAPP_PATH}/data/* /mnt/geoserver_datadir/
 
-
-ENV ENABLE_CORS=1
-# Enable CORS in Tomcat
-RUN if [ "$ENABLE_CORS" = 1 ] ; then sed -i -E "s|<\!-- ==================== Built In Filter Mappings ====================== -->|<filter>\n  <filter-name>CorsFilter</filter-name>\n  <filter-class>org.apache.catalina.filters.CorsFilter</filter-class>\n</filter>\n<filter-mapping>\n  <filter-name>CorsFilter</filter-name>\n  <url-pattern>/*</url-pattern>\n</filter-mapping>\n  <\!-- ==================== Built In Filter Mappingsss ====================== -->|gm" /usr/local/tomcat/conf/web.xml ; fi
+# Copy CORS-enabled web.xml in Tomcat (used of not, depends on env var, see entrypoint)
+COPY web-cors.xml /usr/local/tomcat/webapps/geoserver/WEB-INF/
 
 ADD entrypoint.sh /entrypoint.sh
 RUN chmod u+x /entrypoint.sh
 
 # Make an env var out of the ARG variable, to make it available to the entrypoint
 ENV WEBAPP_PATH=${WEBAPP_PATH}
+ENV ENABLE_CORS="false"
 
 ENTRYPOINT ["/entrypoint.sh"]
 
