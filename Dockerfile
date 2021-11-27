@@ -44,7 +44,7 @@ RUN for plugin in $PLUGINS_COMMUNITY; do \
     rm /tmp/* ; \
   done
 
-ENV CATALINA_OPTS "-Xms1024M \
+ENV CATALINA_OPTS "-Xms256M \
  -Xbootclasspath/a:$CATALINA_HOME/webapps/${WEBAPP_PATH}/WEB-INF/lib/marlin.jar \
  -Xbootclasspath/p:$CATALINA_HOME/webapps/${WEBAPP_PATH}/WEB-INF/lib/marlin-sun-java2d.jar \
  -Dsun.java2d.renderer=org.marlin.pisces.MarlinRenderingEngine \
