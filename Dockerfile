@@ -24,7 +24,7 @@ RUN cd /usr/local/tomcat/lib && \
 VOLUME [ "/mnt/geoserver_datadir", "/mnt/geoserver_geodata", "/mnt/geoserver_tiles", "/tmp" ]
 
 # space-separate list of plugins to install
-ARG PLUGINS_EXT="css control-flow vectortiles"
+ARG PLUGINS_EXT="cas css control-flow vectortiles"
 ARG PLUGINS_COMMUNITY=""
 
 # Install plugins if some listed
