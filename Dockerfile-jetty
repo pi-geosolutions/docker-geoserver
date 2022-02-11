@@ -7,6 +7,23 @@ ARG GEOSERVER_MINOR_VERSION=2
 ARG WEBAPP_PATH="geoserver"
 
 USER root
+
+RUN echo "deb http://httpredir.debian.org/debian buster main contrib" > /etc/apt/sources.list \
+    && echo "deb http://security.debian.org/ buster/updates main contrib" >> /etc/apt/sources.list \
+    && echo "ttf-mscorefonts-installer msttcorefonts/accepted-mscorefonts-eula select true" | debconf-set-selections \
+    && apt-get update \
+    && apt-get install -y ttf-mscorefonts-installer \
+    && apt-get install -y wget \
+    && apt-get clean \
+    && apt-get autoremove -y \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN wget https://downloads.sourceforge.net/project/libjpeg-turbo/2.0.5/libjpeg-turbo-official_2.0.5_amd64.deb \
+    && dpkg -i libjpeg-turbo-official_2.0.5_amd64.deb \
+    && apt-get -f install \
+    && rm libjpeg-turbo-official_2.0.5_amd64.deb
+
+
 RUN mkdir /tmp/geoserver /mnt/geoserver_datadir /mnt/geoserver_geodata /mnt/geoserver_tiles && \
     chown -R jetty:jetty /tmp/geoserver /mnt/geoserver_datadir /mnt/geoserver_geodata /mnt/geoserver_tiles
 
@@ -26,7 +43,7 @@ RUN curl -L https://sourceforge.net/projects/geoserver/files/GeoServer/${GEOSERV
 RUN wget https://github.com/bourgesl/marlin-renderer/releases/download/v0.9.0/marlin-0.9.0-Unsafe.jar -O $JETTY_BASE/webapps/${WEBAPP_PATH}/WEB-INF/lib/marlin.jar && \
     wget https://github.com/bourgesl/marlin-renderer/releases/download/v0.9.0/marlin-0.9.0-Unsafe-sun-java2d.jar -O $JETTY_BASE/webapps/${WEBAPP_PATH}/WEB-INF/lib/marlin-sun-java2d.jar
 
-VOLUME [ "/mnt/geoserver_datadir", "/mnt/geoserver_geodata", "/mnt/geoserver_tiles", "/tmp" ]
+VOLUME [ "/mnt/geoserver_datadir", "/mnt/geoserver_geodata", "/mnt/geoserver_tiles", "/tmp", "/run/jetty" ]
 
 # space-separate list of plugins to install
 ARG PLUGINS_EXT="cas css control-flow vectortiles"
@@ -49,19 +66,6 @@ RUN for plugin in $PLUGINS_COMMUNITY; do \
     rm /tmp/* ; \
   done
 
-ENV JAVA_OPTS "-Xms256M \
- -Xbootclasspath/a:$JETTY_BASE/webapps/${WEBAPP_PATH}/WEB-INF/lib/marlin.jar \
- -Xbootclasspath/p:$JETTY_BASE/webapps/${WEBAPP_PATH}/WEB-INF/lib/marlin-sun-java2d.jar \
- -Dsun.java2d.renderer=org.marlin.pisces.MarlinRenderingEngine \
- -DGEOSERVER_DATA_DIR=/mnt/geoserver_datadir \
- -DGEOWEBCACHE_CACHE_DIR=/mnt/geoserver_tiles \
- -DENABLE_JSONP=true \
- -Dorg.geotools.coverage.jaiext.enabled=true \
- -Dhttps.protocols=TLSv1,TLSv1.1,TLSv1.2 \
- -XX:SoftRefLRUPolicyMSPerMB=36000 \
- -XX:+UnlockExperimentalVMOptions \
- -XX:+UseCGroupMemoryLimitForHeap"
-
 # Copy CORS-enabled web.xml in Jetty (used or not, depends on env var, see entrypoint)
 COPY web-cors-jetty.xml $JETTY_BASE/webapps/${WEBAPP_PATH}/WEB-INF/web-cors.xml
 
@@ -72,10 +76,26 @@ RUN chmod u+x /entrypoint.sh &&\
 
 USER jetty
 
+ENV LD_LIBRARY_PATH=/opt/libjpeg-turbo/lib64
+
+ENV JAVA_OPTS "-Xms256M  \
+ -Xbootclasspath/a:$JETTY_BASE/webapps/${WEBAPP_PATH}/WEB-INF/lib/marlin.jar \
+ -Xbootclasspath/p:$JETTY_BASE/webapps/${WEBAPP_PATH}/WEB-INF/lib/marlin-sun-java2d.jar \
+ -Dsun.java2d.renderer=org.marlin.pisces.MarlinRenderingEngine \
+ -DGEOSERVER_DATA_DIR=/mnt/geoserver_datadir \
+ -DGEOWEBCACHE_CACHE_DIR=/mnt/geoserver_tiles \
+ -DENABLE_JSONP=true \
+ -Dorg.geotools.coverage.jaiext.enabled=true \
+ -Djetty.httpConfig.sendServerVersion=false \
+ -Dhttps.protocols=TLSv1,TLSv1.1,TLSv1.2 \
+ -XX:SoftRefLRUPolicyMSPerMB=36000 \
+ -XX:+UnlockExperimentalVMOptions \
+ -XX:+UseCGroupMemoryLimitForHeap"
+
 # Make an env var out of the ARG variable, to make it available to the entrypoint
 ENV WEBAPP_PATH=${WEBAPP_PATH}
 ENV ENABLE_CORS="false"
 
 ENTRYPOINT ["/entrypoint.sh"]
 
-CMD ["java","-jar","/usr/local/jetty/start.jar"]
+CMD ["sh", "-c", "exec java $JAVA_OPTS -jar /usr/local/jetty/start.jar"]
